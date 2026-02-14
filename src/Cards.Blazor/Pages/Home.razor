@@ -1,0 +1,130 @@
+﻿@page "/"
+@using Cards.Blazor.Components
+@using Cards.Blazor.Models
+@using Cards.Blazor.Services
+@inject CardService CardService
+
+<PageTitle>Cards.Blazor - Demo</PageTitle>
+
+<h1>Cards.Blazor - Example</h1>
+
+<button @onclick="HandleDeal" style="position: absolute; left: 310px; top: 240px; z-index: 1000;">DEAL</button>
+
+<CardsComponent Options="@_options" Containers="@_containers" OnComponentInitialized="@OnCardsInitialized" />
+
+@code {
+    private CardOptions _options = new()
+    {
+        TableWidth = 600,
+        TableHeight = 400,
+        DeckType = DeckType.Standard
+    };
+
+    private List<CardContainer> _containers = new();
+    private Deck? _deck;
+    private Hand? _upperHand;
+    private Hand? _lowerHand;
+    private Deck? _discardPile;
+    private bool _initialized = false;
+
+    private void OnCardsInitialized()
+    {
+        if (_initialized) return;
+        _initialized = true;
+
+        // Create a new deck
+        _deck = CardService.CreateDeck(_options.TableWidth / 2 - 50, _options.TableHeight / 2, false);
+        
+        // Add all cards to the deck
+        _deck.AddCards(CardService.AllCards);
+        
+        // Calculate positions immediately
+        _deck.CalculatePositions(_options);
+        
+        // Position all cards at their target positions immediately
+        foreach (var card in _deck.Cards)
+        {
+            CardService.MoveCardToFront(card);
+        }
+
+        // Create hands
+        _upperHand = CardService.CreateHand(_options.TableWidth / 2, 60, false);
+        _lowerHand = CardService.CreateHand(_options.TableWidth / 2, 340, true);
+
+        // Create discard pile
+        _discardPile = CardService.CreateDeck(_options.TableWidth / 2 + 50, _options.TableHeight / 2, true);
+
+        // Set up click handlers
+        _deck.CardClicked += OnDeckCardClicked;
+        _lowerHand.CardClicked += OnLowerHandCardClicked;
+
+        // Add containers to render list
+        _containers.Add(_deck);
+        _containers.Add(_upperHand);
+        _containers.Add(_lowerHand);
+        _containers.Add(_discardPile);
+
+        StateHasChanged();
+    }
+
+    private async Task HandleDeal()
+    {
+        if (_deck == null || _upperHand == null || _lowerHand == null || _discardPile == null)
+            return;
+
+        var hands = new List<CardContainer> { _upperHand, _lowerHand };
+        
+        // Deal 5 cards to each hand
+        await _deck.DealAsync(5, hands, 50, () =>
+        {
+            // After dealing, add top card of deck to discard pile
+            var topCard = _deck.TopCard();
+            if (topCard != null)
+            {
+                _discardPile.AddCard(topCard);
+                _discardPile.CalculatePositions(_options);
+                topCard.FaceUp = true;
+                CardService.MoveCardToFront(topCard);
+            }
+            
+            StateHasChanged();
+        });
+
+        StateHasChanged();
+    }
+
+    private void OnDeckCardClicked(object? sender, Card card)
+    {
+        if (_deck == null || _lowerHand == null) return;
+
+        // If clicking the top card of the deck, add it to the lower hand
+        if (card == _deck.TopCard())
+        {
+            _lowerHand.AddCard(card);
+            _lowerHand.CalculatePositions(_options);
+            card.FaceUp = true;
+            CardService.MoveCardToFront(card);
+            StateHasChanged();
+        }
+    }
+
+    private void OnLowerHandCardClicked(object? sender, Card card)
+    {
+        if (_discardPile == null || _lowerHand == null) return;
+
+        var topDiscardCard = _discardPile.TopCard();
+        if (topDiscardCard != null)
+        {
+            // If the card matches suit or rank, move it to discard pile
+            if (card.Suit == topDiscardCard.Suit || card.Rank == topDiscardCard.Rank)
+            {
+                _discardPile.AddCard(card);
+                _discardPile.CalculatePositions(_options);
+                _lowerHand.CalculatePositions(_options);
+                CardService.MoveCardToFront(card);
+                StateHasChanged();
+            }
+        }
+    }
+}
+
