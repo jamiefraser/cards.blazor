@@ -1,6 +1,7 @@
 @using Cards.Blazor.Models
 @using Cards.Blazor.Services
 @inject CardService CardService
+@implements IDisposable
 
 <div class="card-table" style="width: @(Options.TableWidth)px; height: @(Options.TableHeight)px; position: relative;">
     @foreach (var card in GetAllVisibleCards())

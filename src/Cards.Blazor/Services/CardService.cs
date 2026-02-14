@@ -43,7 +43,6 @@ public class CardService
         switch (Options.DeckType)
         {
             case DeckType.Standard:
-                Options.AcesHigh = false;
                 start = Options.AcesHigh ? 2 : 1;
                 end = start + 12;
                 break;
