@@ -1,0 +1,139 @@
+@using Cards.Blazor.Models
+@using Cards.Blazor.Services
+@inject CardService CardService
+
+<div class="card-table" style="width: @(Options.TableWidth)px; height: @(Options.TableHeight)px; position: relative;">
+    @foreach (var card in GetAllVisibleCards())
+    {
+        <div class="card @(card.FaceUp ? "face-up" : "face-down")"
+             style="@GetCardStyle(card)"
+             @onclick="() => HandleCardClick(card)"
+             @onmousedown="() => HandleCardMouseDown(card)"
+             @onmouseup="() => HandleCardMouseUp(card)">
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Configuration options for the card system.
+    /// </summary>
+    [Parameter]
+    public CardOptions Options { get; set; } = new();
+
+    /// <summary>
+    /// List of containers to render.
+    /// </summary>
+    [Parameter]
+    public List<CardContainer> Containers { get; set; } = new();
+
+    /// <summary>
+    /// Event fired when a card is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback<Card> OnCardClick { get; set; }
+
+    /// <summary>
+    /// Event fired when the component is initialized.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnComponentInitialized { get; set; }
+
+    private bool _initialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_initialized)
+        {
+            CardService.Initialize(Options);
+            CardService.CardsChanged += OnCardsChanged;
+            _initialized = true;
+
+            await OnComponentInitialized.InvokeAsync();
+        }
+    }
+
+    private void OnCardsChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Recalculate positions when containers change
+        foreach (var container in Containers)
+        {
+            container.CalculatePositions(Options);
+        }
+    }
+
+    private IEnumerable<Card> GetAllVisibleCards()
+    {
+        var cards = new List<Card>();
+        foreach (var container in Containers)
+        {
+            foreach (var card in container.Cards)
+            {
+                cards.Add(card);
+            }
+        }
+        return cards.OrderBy(c => c.ZIndex);
+    }
+
+    private string GetCardStyle(Card card)
+    {
+        var bgPos = card.FaceUp 
+            ? card.GetBackgroundPosition(Options)
+            : card.GetCardBackPosition(Options);
+
+        var styles = new List<string>
+        {
+            $"width: {Options.CardSize.Width}px",
+            $"height: {Options.CardSize.Height}px",
+            $"background-image: url('{Options.CardsUrl}')",
+            $"background-position: {bgPos.X}px {bgPos.Y}px",
+            $"position: absolute",
+            $"top: {card.TargetTop}px",
+            $"left: {card.TargetLeft}px",
+            $"z-index: {card.ZIndex}",
+            $"cursor: pointer"
+        };
+
+        if (card.Rotation != 0)
+        {
+            styles.Add($"transform: rotate({card.Rotation}deg)");
+        }
+
+        return string.Join("; ", styles);
+    }
+
+    private async Task HandleCardClick(Card card)
+    {
+        if (card.Container != null)
+        {
+            card.Container.OnCardClick(card);
+        }
+        await OnCardClick.InvokeAsync(card);
+    }
+
+    private void HandleCardMouseDown(Card card)
+    {
+        if (card.Container != null)
+        {
+            card.Container.OnCardMouseDown(card);
+        }
+    }
+
+    private void HandleCardMouseUp(Card card)
+    {
+        if (card.Container != null)
+        {
+            card.Container.OnCardMouseUp(card);
+        }
+    }
+
+    public void Dispose()
+    {
+        CardService.CardsChanged -= OnCardsChanged;
+    }
+}

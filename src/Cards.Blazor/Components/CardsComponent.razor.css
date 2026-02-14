@@ -1,0 +1,22 @@
+.card-table {
+    background-color: green;
+    border: solid 6px brown;
+    border-radius: 8px;
+    box-shadow: #111 1px 1px 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card {
+    transition: top 0.5s ease, left 0.5s ease, transform 0.5s ease;
+    background-repeat: no-repeat;
+    user-select: none;
+}
+
+.card:hover {
+    filter: brightness(1.1);
+}
+
+.card:active {
+    filter: brightness(0.9);
+}

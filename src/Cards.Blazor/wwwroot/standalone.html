@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cards.Blazor - Web Component Example</title>
+    <base href="/" />
+    <style>
+        html {
+            background-color: #092E20;
+        }
+
+        body {
+            position: relative;
+            border-radius: 8px;
+            box-shadow: black 0px 0px 2px;
+            width: 700px;
+            background: #FFF;
+            margin: 20px auto;
+            border: solid 1px black;
+            font-family: arial, sans-serif;
+            padding: 50px;
+        }
+
+        h1 {
+            font-size: 60px;
+            text-align: center;
+            padding: 0px;
+            margin: 10px auto;
+        }
+
+        footer {
+            font-size: 12px;
+            color: grey;
+            margin: 10px;
+        }
+
+        footer a,
+        footer a:visited {
+            color: grey;
+        }
+
+        footer a:hover {
+            color: black;
+        }
+
+        .instructions {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+
+        .instructions h2 {
+            margin-top: 0;
+        }
+
+        .instructions ul {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cards.Blazor Web Component</h1>
+
+    <div class="instructions">
+        <h2>How to Use</h2>
+        <p>This demonstrates the Cards.Blazor library running as a Blazor WebAssembly web component.</p>
+        <ul>
+            <li>Click <strong>DEAL</strong> to deal 5 cards to each hand</li>
+            <li>Click the <strong>deck</strong> (left stack) to draw a card to your hand</li>
+            <li>Click a <strong>card in your hand</strong> (bottom) that matches the suit or rank of the top discard pile card (right stack) to play it</li>
+        </ul>
+    </div>
+
+    <!-- The Cards Blazor Web Component -->
+    <div id="blazor-root"></div>
+
+    <footer>
+        Cards.Blazor was created as a C#/.NET port of cards.js and is licensed under the MIT license.
+        The card images were created by <a href="http://nicubunu.ro">Nicu Buculei</a> and are in the public domain.
+    </footer>
+
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        // This script demonstrates how to interact with the Blazor web component
+        // The component is registered in Program.cs using RegisterCustomElement
+        
+        // Note: In .NET 10, custom elements are automatically available after Blazor initializes
+        // You can use them just like regular HTML elements:
+        // <cards-component></cards-component>
+    </script>
+</body>
+</html>
