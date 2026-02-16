@@ -103,7 +103,7 @@ export const GameTable: React.FC<GameTableProps> = ({
       {/* Middle row: side opponents */}
       {sideOpponents.length > 0 && (
         <div style={middleRowStyle}>
-          {sideOpponents.map((player, index) => (
+          {sideOpponents.map((player) => (
             <PlayerArea
               key={player.id}
               player={player}

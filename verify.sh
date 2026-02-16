@@ -5,7 +5,9 @@ echo "=== Verification Script ==="
 echo ""
 
 echo "1. Checking TypeScript compilation..."
-cd /home/runner/work/cards.blazor/cards.blazor
+# Use script directory as base
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 npm run build > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     echo "✓ TypeScript compiles successfully"

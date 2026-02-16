@@ -9,7 +9,6 @@ export type {
   DeckType,
   CardSize,
   CardOptions,
-  CardType,
 } from './types';
 
 // Export utility functions

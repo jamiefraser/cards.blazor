@@ -42,6 +42,3 @@ export type CardOptions = {
   redJoker?: boolean;
   type?: DeckType;
 };
-
-// Re-export for convenience
-export type { Card as CardType };
