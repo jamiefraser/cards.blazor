@@ -58,7 +58,7 @@ export const CardView: React.FC<CardViewProps> = ({
     height: cardSize.height * scale,
     backgroundImage: `url(${cardsUrl})`,
     backgroundPosition: getBackgroundPosition(),
-    backgroundSize: scale !== 1 ? `${100 / scale}%` : undefined,
+    backgroundSize: scale !== 1 ? `${100 / scale}%` : '100%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
     display: 'inline-block',

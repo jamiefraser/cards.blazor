@@ -102,13 +102,11 @@ export function deal(deck: Card[], count: number, numHands: number): Card[][] {
   const hands: Card[][] = Array.from({ length: numHands }, () => []);
   const deckCopy = [...deck];
   
-  let cardIndex = 0;
   const totalCards = count * numHands;
   
   for (let i = 0; i < totalCards && deckCopy.length > 0; i++) {
     const card = deckCopy.pop()!;
     hands[i % numHands].push(card);
-    cardIndex++;
   }
   
   return hands;
