@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Card Game Test</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #092E20;
+            font-family: Arial, sans-serif;
+        }
+        #root {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Inline the necessary types and utilities for testing
+        const createCard = (suit, rank) => ({
+            suit,
+            rank,
+            name: suit.toUpperCase() + rank,
+            shortName: suit + rank,
+            faceUp: false,
+        });
+
+        const createDeck = () => {
+            const cards = [];
+            const suits = ['h', 's', 'd', 'c'];
+            for (let suit of suits) {
+                for (let rank = 1; rank <= 13; rank++) {
+                    cards.push(createCard(suit, rank));
+                }
+            }
+            return cards;
+        };
+
+        const shuffle = (deck) => {
+            const shuffled = [...deck];
+            let i = shuffled.length;
+            while (--i) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        };
+
+        const getCardBackgroundPosition = (card, cardSize) => {
+            const offsets = { 'c': 0, 'd': 1, 'h': 2, 's': 3 };
+            let rank = card.rank === 14 ? 1 : card.rank;
+            return {
+                x: -rank * cardSize.width,
+                y: -offsets[card.suit] * cardSize.height,
+            };
+        };
+
+        const getCardBackPosition = (cardback, cardSize) => {
+            const y = cardback === 'red' ? 0 : -cardSize.height;
+            return { x: 0, y };
+        };
+
+        // CardView Component
+        const CardView = ({ card, faceUp, cardWidth, cardHeight, scale = 1, onClick }) => {
+            const cardsUrl = 'img/cards.png';
+            const cardback = 'red';
+            const cardSize = { width: cardWidth, height: cardHeight };
+            
+            const bgPos = faceUp
+                ? getCardBackgroundPosition(card, cardSize)
+                : getCardBackPosition(cardback, cardSize);
+
+            const cardStyle = {
+                width: cardWidth * scale,
+                height: cardHeight * scale,
+                backgroundImage: `url(${cardsUrl})`,
+                backgroundPosition: `${bgPos.x * scale}px ${bgPos.y * scale}px`,
+                backgroundSize: `${cardWidth * 15 * scale}px ${cardHeight * 5 * scale}px`,
+                position: 'relative',
+                cursor: onClick ? 'pointer' : 'default',
+                display: 'inline-block',
+            };
+
+            return (
+                <div
+                    data-card={card.shortName}
+                    className="card"
+                    style={cardStyle}
+                    onClick={() => onClick && onClick(card)}
+                />
+            );
+        };
+
+        // MeldView Component
+        const MeldView = ({ meld, cardWidth, cardHeight, scale = 1 }) => {
+            const padding = 18 * scale;
+
+            return (
+                <div data-meld-id={meld.id} style={{ display: 'inline-flex', position: 'relative' }}>
+                    {meld.label && (
+                        <div style={{ position: 'absolute', top: -20, fontSize: 12 * scale, color: '#fff' }}>
+                            {meld.label}
+                        </div>
+                    )}
+                    {meld.cards.map((card, index) => (
+                        <CardView
+                            key={`${meld.id}-${card.shortName}-${index}`}
+                            card={card}
+                            faceUp={true}
+                            cardWidth={cardWidth}
+                            cardHeight={cardHeight}
+                            scale={scale}
+                            style={{
+                                marginRight: index < meld.cards.length - 1 ? -cardWidth * scale + padding : 0,
+                                zIndex: index,
+                            }}
+                        />
+                    ))}
+                </div>
+            );
+        };
+
+        // PlayerArea Component
+        const PlayerArea = ({ player, cardWidth, cardHeight, scale = 1 }) => {
+            const padding = 18 * scale;
+
+            return (
+                <div data-player-id={player.id} style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: 10 * scale 
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 * scale, marginBottom: 8 * scale }}>
+                        <img 
+                            src={player.avatarUrl} 
+                            alt={player.label} 
+                            style={{ 
+                                width: 40 * scale, 
+                                height: 40 * scale, 
+                                borderRadius: '50%',
+                                border: player.isSelf ? '2px solid #4CAF50' : '2px solid #888'
+                            }} 
+                        />
+                        <span style={{ 
+                            fontSize: 14 * scale, 
+                            fontWeight: player.isSelf ? 'bold' : 'normal',
+                            color: player.isSelf ? '#4CAF50' : '#fff'
+                        }}>
+                            {player.label}
+                        </span>
+                    </div>
+
+                    {player.melds.length > 0 && (
+                        <div style={{ display: 'flex', gap: 10 * scale, flexWrap: 'wrap' }}>
+                            {player.melds.map(meld => (
+                                <MeldView
+                                    key={meld.id}
+                                    meld={meld}
+                                    cardWidth={cardWidth}
+                                    cardHeight={cardHeight}
+                                    scale={scale}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {player.hand.length > 0 && (
+                        <div style={{ display: 'flex' }}>
+                            {player.hand.map((card, index) => (
+                                <CardView
+                                    key={`${player.id}-${card.shortName}-${index}`}
+                                    card={card}
+                                    faceUp={player.isSelf}
+                                    cardWidth={cardWidth}
+                                    cardHeight={cardHeight}
+                                    scale={scale}
+                                    style={{
+                                        marginRight: index < player.hand.length - 1 ? -cardWidth * scale + padding : 0,
+                                        zIndex: index,
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // GameTable Component
+        const GameTable = ({ players, currentPlayerId, opponentScale = 0.66, cardWidth, cardHeight }) => {
+            const selfPlayer = players.find(p => p.id === currentPlayerId);
+            const otherPlayers = players.filter(p => p.id !== currentPlayerId);
+            const topOpponents = otherPlayers.slice(0, Math.ceil(otherPlayers.length / 2));
+            const sideOpponents = otherPlayers.slice(Math.ceil(otherPlayers.length / 2));
+
+            return (
+                <div style={{
+                    width: '100%',
+                    minHeight: 600,
+                    backgroundColor: '#0a5f0a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: 20,
+                    borderRadius: 8,
+                    border: '6px solid #654321',
+                    boxSizing: 'border-box',
+                }}>
+                    {topOpponents.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 40 }}>
+                            {topOpponents.map(player => (
+                                <PlayerArea
+                                    key={player.id}
+                                    player={player}
+                                    cardWidth={cardWidth}
+                                    cardHeight={cardHeight}
+                                    scale={opponentScale}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {sideOpponents.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            {sideOpponents.map(player => (
+                                <PlayerArea
+                                    key={player.id}
+                                    player={player}
+                                    cardWidth={cardWidth}
+                                    cardHeight={cardHeight}
+                                    scale={opponentScale}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {selfPlayer && (
+                        <div>
+                            <PlayerArea
+                                player={selfPlayer}
+                                cardWidth={cardWidth}
+                                cardHeight={cardHeight}
+                                scale={1}
+                            />
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Test App
+        function App() {
+            const deck = shuffle(createDeck());
+
+            const players = [
+                {
+                    id: 'player-1',
+                    label: 'You',
+                    avatarUrl: 'https://via.placeholder.com/40/4CAF50/FFFFFF?text=P1',
+                    hand: deck.slice(0, 7),
+                    melds: [
+                        {
+                            id: 'meld-1',
+                            cards: deck.slice(52, 55),
+                            label: 'Three of a Kind',
+                        },
+                    ],
+                    isSelf: true,
+                },
+                {
+                    id: 'player-2',
+                    label: 'Opponent 1',
+                    avatarUrl: 'https://via.placeholder.com/40/FF5722/FFFFFF?text=P2',
+                    hand: deck.slice(7, 14),
+                    melds: [],
+                    isSelf: false,
+                },
+                {
+                    id: 'player-3',
+                    label: 'Opponent 2',
+                    avatarUrl: 'https://via.placeholder.com/40/2196F3/FFFFFF?text=P3',
+                    hand: deck.slice(14, 21),
+                    melds: [
+                        {
+                            id: 'meld-3',
+                            cards: deck.slice(55, 58),
+                            label: 'Straight',
+                        },
+                    ],
+                    isSelf: false,
+                },
+            ];
+
+            return (
+                <div>
+                    <h1>React Card Game - Live Test</h1>
+                    <GameTable
+                        players={players}
+                        currentPlayerId="player-1"
+                        cardWidth={69}
+                        cardHeight={94}
+                        opponentScale={0.66}
+                    />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
